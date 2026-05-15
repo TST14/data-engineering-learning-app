@@ -1,0 +1,36 @@
+questions:
+  - question: "What does PARTITION BY do in a window function?"
+    options:
+      - "Filters rows like WHERE"
+      - "Groups rows and collapses them like GROUP BY"
+      - "Divides rows into subsets for the window calculation"
+      - "Sorts the entire result set"
+    answer: 2
+    explanation: "PARTITION BY splits rows into independent windows. The function is applied separately within each partition, but all rows are still returned."
+
+  - question: "What is the difference between RANK() and DENSE_RANK()?"
+    options:
+      - "RANK() is faster"
+      - "RANK() leaves gaps after ties; DENSE_RANK() does not"
+      - "DENSE_RANK() leaves gaps after ties; RANK() does not"
+      - "They are identical"
+    answer: 1
+    explanation: "If two rows tie at rank 2, RANK() skips 3 and goes to 4. DENSE_RANK() continues with 3."
+
+  - question: "Which function retrieves a value from a previous row?"
+    options:
+      - "LEAD()"
+      - "FIRST_VALUE()"
+      - "LAG()"
+      - "PREV()"
+    answer: 2
+    explanation: "LAG(col, n) returns the value from n rows before the current row within the partition."
+
+  - question: "Unlike GROUP BY, window functions..."
+    options:
+      - "Cannot use aggregate functions"
+      - "Always return exactly one row"
+      - "Preserve all rows in the result set"
+      - "Require an ORDER BY clause"
+    answer: 2
+    explanation: "Window functions don't collapse rows. Each input row keeps its identity and gets the window result appended."

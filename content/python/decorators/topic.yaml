@@ -1,0 +1,8 @@
+difficulty: Intermediate
+estimated_time: 15 min
+prerequisites: []
+tags:
+- python
+- decorators
+- higher-order-functions
+title: Python Decorators

@@ -1,0 +1,8 @@
+difficulty: Beginner
+estimated_time: 15 min
+prerequisites: []
+tags:
+- data-modeling
+- star-schema
+- snowflake
+title: Star vs Snowflake Schema

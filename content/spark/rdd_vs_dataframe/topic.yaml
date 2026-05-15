@@ -1,0 +1,9 @@
+difficulty: Intermediate
+estimated_time: 20 min
+prerequisites: []
+tags:
+- spark
+- RDD
+- dataframe
+- performance
+title: RDD vs DataFrame in Spark

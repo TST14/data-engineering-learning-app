@@ -1,0 +1,10 @@
+difficulty: Intermediate
+estimated_time: 15 min
+prerequisites: []
+tags:
+- python
+- generators
+- iterators
+- yield
+- lazy-evaluation
+title: Python Generators & Iterators

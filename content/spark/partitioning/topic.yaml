@@ -1,0 +1,9 @@
+difficulty: Advanced
+estimated_time: 20 min
+prerequisites: []
+tags:
+- spark
+- partitioning
+- parallelism
+- shuffle
+title: Spark Partitioning

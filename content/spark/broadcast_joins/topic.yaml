@@ -1,0 +1,9 @@
+difficulty: Advanced
+estimated_time: 15 min
+prerequisites: []
+tags:
+- spark
+- broadcast
+- joins
+- optimization
+title: Broadcast Joins in Spark

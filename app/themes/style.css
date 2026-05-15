@@ -1,0 +1,21 @@
+/* Data Engineering Learning Hub – custom styles */
+
+/* Sidebar */
+section[data-testid="stSidebar"] {
+    background-color: #0f1117;
+}
+
+/* Topic title */
+h1 {
+    color: #4fc3f7;
+}
+
+/* Code blocks */
+.stCode {
+    border-left: 3px solid #4fc3f7;
+}
+
+/* Quiz radio labels */
+.stRadio label {
+    font-size: 0.95rem;
+}

@@ -1,0 +1,9 @@
+difficulty: Intermediate
+estimated_time: 15 min
+prerequisites: []
+tags:
+- sql
+- CTEs
+- WITH
+- readability
+title: Common Table Expressions (CTEs)

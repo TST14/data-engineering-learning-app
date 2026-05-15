@@ -1,0 +1,8 @@
+difficulty: Intermediate
+estimated_time: 20 min
+prerequisites: []
+tags:
+- data-engineering
+- batch
+- streaming
+title: Batch vs Streaming Processing

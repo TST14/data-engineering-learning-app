@@ -1,0 +1,45 @@
+questions:
+  - question: "Where are Python objects (lists, dicts, instances) stored?"
+    options:
+      - "Stack"
+      - "Heap"
+      - "CPU Register"
+      - "OS Cache"
+    answer: 1
+    explanation: "All Python objects live in the private heap. The stack only stores references and function call frames."
+
+  - question: "What happens when an object's reference count reaches 0?"
+    options:
+      - "Nothing — GC handles it later"
+      - "Object is moved to the stack"
+      - "Memory is freed immediately"
+      - "A full GC sweep is triggered"
+    answer: 2
+    explanation: "CPython frees the object's memory immediately when its reference count drops to zero."
+
+  - question: "Which integer range does Python cache (intern) by default?"
+    options:
+      - "-5 to 256"
+      - "0 to 100"
+      - "-1 to 1000"
+      - "All small integers"
+    answer: 0
+    explanation: "CPython interns integers from -5 to 256 because they are used very frequently."
+
+  - question: "What problem does the garbage collector solve that reference counting cannot?"
+    options:
+      - "Memory fragmentation"
+      - "Circular references"
+      - "Large object allocation"
+      - "Thread safety"
+    answer: 1
+    explanation: "Reference counting fails when objects reference each other in a cycle. The cyclic GC detects and collects these."
+
+  - question: "What is PyMalloc?"
+    options:
+      - "A third-party memory profiler"
+      - "Python's memory pool for small objects (< 512 bytes)"
+      - "The OS allocator used by Python"
+      - "A garbage collection algorithm"
+    answer: 1
+    explanation: "PyMalloc is Python's custom allocator that uses pre-allocated pools for small objects, reducing syscall overhead."

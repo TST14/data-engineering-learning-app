@@ -1,0 +1,8 @@
+difficulty: Intermediate
+estimated_time: 10 min
+prerequisites: []
+tags:
+- python
+- copy
+- memory
+title: Shallow vs Deep Copy

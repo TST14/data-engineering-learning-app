@@ -1,0 +1,9 @@
+difficulty: Intermediate
+estimated_time: 15 min
+prerequisites: []
+tags:
+- databases
+- ACID
+- BASE
+- transactions
+title: ACID vs BASE

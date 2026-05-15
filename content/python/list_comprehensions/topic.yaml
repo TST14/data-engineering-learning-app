@@ -1,0 +1,8 @@
+difficulty: Beginner
+estimated_time: 10 min
+prerequisites: []
+tags:
+- python
+- list-comprehensions
+- performance
+title: List Comprehensions

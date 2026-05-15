@@ -1,0 +1,8 @@
+difficulty: Intermediate
+estimated_time: 10 min
+prerequisites: []
+tags:
+- python
+- context-managers
+- with-statement
+title: Context Managers

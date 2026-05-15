@@ -1,0 +1,9 @@
+difficulty: Beginner
+estimated_time: 10 min
+prerequisites: []
+tags:
+- python
+- args
+- kwargs
+- variadic
+title: '*args and **kwargs'

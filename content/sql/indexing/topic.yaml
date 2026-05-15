@@ -1,0 +1,9 @@
+difficulty: Intermediate
+estimated_time: 20 min
+prerequisites: []
+tags:
+- sql
+- indexes
+- B-tree
+- performance
+title: Database Indexing

@@ -1,0 +1,36 @@
+questions:
+  - question: "What is the time complexity of `x in my_set` for a Python set?"
+    options:
+      - "O(n)"
+      - "O(log n)"
+      - "O(1)"
+      - "O(n²)"
+    answer: 2
+    explanation: "Sets use a hash table internally, giving O(1) average-case membership testing."
+
+  - question: "Which data structure preserves insertion order?"
+    options:
+      - "set"
+      - "frozenset"
+      - "list"
+      - "dict (Python 3.7+)"
+    answer: 2
+    explanation: "Lists preserve insertion order. Note: dicts also preserve insertion order since Python 3.7, but sets do not."
+
+  - question: "What does `a ^ b` return for sets a and b?"
+    options:
+      - "Intersection of a and b"
+      - "Union of a and b"
+      - "Elements in a but not b"
+      - "Elements in a or b but not both"
+    answer: 3
+    explanation: "The ^ operator returns the symmetric difference — elements present in exactly one of the two sets."
+
+  - question: "Which operation is sets NOT suited for?"
+    options:
+      - "Deduplication"
+      - "Membership testing"
+      - "Accessing elements by index"
+      - "Set intersection"
+    answer: 2
+    explanation: "Sets are unordered and don't support indexing. Use a list if you need to access elements by position."

@@ -1,0 +1,9 @@
+difficulty: Intermediate
+estimated_time: 15 min
+prerequisites: []
+tags:
+- spark
+- lazy-evaluation
+- DAG
+- transformations
+title: Spark Lazy Evaluation

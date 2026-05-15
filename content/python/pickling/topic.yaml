@@ -1,0 +1,8 @@
+difficulty: Intermediate
+estimated_time: 15 min
+prerequisites: []
+tags:
+- python
+- pickle
+- serialization
+title: Python Pickling & Serialization

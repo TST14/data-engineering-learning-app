@@ -1,0 +1,9 @@
+difficulty: Intermediate
+estimated_time: 15 min
+prerequisites: []
+tags:
+- python
+- dunder
+- OOP
+- magic-methods
+title: Dunder (Magic) Methods
