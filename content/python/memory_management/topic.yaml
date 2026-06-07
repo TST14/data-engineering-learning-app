@@ -1,5 +1,12 @@
-title: "Python Memory Management"
-difficulty: "Intermediate"
-estimated_time: "15 min"
-tags: ["python", "memory", "heap", "stack", "garbage-collection"]
-prerequisites: ["python-basics"]
+title: Python Memory Management
+difficulty: Beginner
+estimated_time: 20 min
+tags:
+- python
+- memory
+- heap
+- stack
+- garbage-collection
+- reference-counting
+- pymalloc
+prerequisites: []

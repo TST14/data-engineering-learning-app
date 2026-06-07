@@ -1,5 +1,10 @@
-title: "Sets vs Lists"
-difficulty: "Beginner"
-estimated_time: "10 min"
-tags: ["python", "data-structures", "performance", "sets", "lists"]
-prerequisites: ["python-basics"]
+title: Sets vs Lists
+difficulty: Beginner
+estimated_time: 10 min
+tags:
+- python
+- data-structures
+- performance
+- sets
+- lists
+prerequisites: []

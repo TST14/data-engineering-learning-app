@@ -1,4 +1,7 @@
-"""Live code runner component (placeholder for sandboxed execution)."""
+"""Live code runner component."""
+import contextlib
+import io
+
 import streamlit as st
 
 
@@ -9,10 +12,18 @@ def render_code_runner(code: str, filename: str = "<topic>") -> None:
         st.subheader("Output")
         try:
             exec_globals: dict = {}
-            exec(compile(code, filename, "exec"), exec_globals)  # noqa: S102
-            if "output" in exec_globals:
-                st.code(str(exec_globals["output"]), language=None)
-            else:
-                st.info("Code executed successfully (no `output` variable set).")
+            stdout_buf = io.StringIO()
+            with contextlib.redirect_stdout(stdout_buf):
+                exec(compile(code, filename, "exec"), exec_globals)  # noqa: S102
+
+            printed = stdout_buf.getvalue()
+            explicit = exec_globals.get("output")
+
+            if printed:
+                st.code(printed, language=None)
+            if explicit is not None:
+                st.code(str(explicit), language=None)
+            if not printed and explicit is None:
+                st.info("Code executed successfully (no output).")
         except Exception as exc:
             st.error(f"Error: {exc}")

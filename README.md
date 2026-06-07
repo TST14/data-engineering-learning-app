@@ -22,8 +22,8 @@ cd data-engineering-learning-app
 pip install -r requirements.txt
 
 # 3. Run the app
-streamlit run app/main.py
-# or
+streamlit run app/main.py --server.runOnSave=true
+# or (suppresses a benign Streamlit 1.32 internal warning)
 python run.py
 ```
 

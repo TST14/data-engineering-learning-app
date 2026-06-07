@@ -1,45 +1,90 @@
 questions:
-  - question: "Where are Python objects (lists, dicts, instances) stored?"
+  - question: "Where does Python store the actual value of a variable (e.g. the number 42 in x = 42)?"
     options:
       - "Stack"
       - "Heap"
       - "CPU Register"
       - "OS Cache"
     answer: 1
-    explanation: "All Python objects live in the private heap. The stack only stores references and function call frames."
+    explanation: "All Python objects live on the Heap. The Stack only stores the variable NAME (a reference/pointer that points to the object on the heap)."
 
   - question: "What happens when an object's reference count reaches 0?"
     options:
-      - "Nothing — GC handles it later"
-      - "Object is moved to the stack"
+      - "Nothing — the GC handles it later"
+      - "The object is moved to the Stack"
       - "Memory is freed immediately"
       - "A full GC sweep is triggered"
     answer: 2
-    explanation: "CPython frees the object's memory immediately when its reference count drops to zero."
+    explanation: "CPython frees the memory immediately when an object's reference count drops to zero. This is the primary cleanup mechanism — no waiting for the GC."
 
-  - question: "Which integer range does Python cache (intern) by default?"
+  - question: "You run: a = [1,2,3]; b = a; b.append(4); print(a). What is printed?"
+    options:
+      - "[1, 2, 3]"
+      - "[1, 2, 3, 4]"
+      - "Error — a is immutable"
+      - "[4]"
+    answer: 1
+    explanation: "b = a does NOT copy the list — both a and b point to the SAME list object on the heap. So appending to b also changes a. Use b = a.copy() to get an independent copy."
+
+  - question: "Which integer range does Python cache (reuse the same object) by default?"
     options:
       - "-5 to 256"
       - "0 to 100"
       - "-1 to 1000"
-      - "All small integers"
+      - "All integers"
     answer: 0
-    explanation: "CPython interns integers from -5 to 256 because they are used very frequently."
+    explanation: "CPython pre-creates integers from -5 to 256. That's why 'a = 100; b = 100; a is b' returns True — they're the same object. Outside this range, new objects are created each time."
 
-  - question: "What problem does the garbage collector solve that reference counting cannot?"
+  - question: "What problem does the Garbage Collector (gc module) solve that reference counting cannot?"
     options:
       - "Memory fragmentation"
       - "Circular references"
       - "Large object allocation"
       - "Thread safety"
     answer: 1
-    explanation: "Reference counting fails when objects reference each other in a cycle. The cyclic GC detects and collects these."
+    explanation: "If object A points to B and B points to A, both have refcount=1 even after you delete your variables — so reference counting won't free them. The GC detects these cycles and cleans them up."
 
-  - question: "What is PyMalloc?"
+  - question: "Which generation does a brand-new Python object start in?"
     options:
-      - "A third-party memory profiler"
-      - "Python's memory pool for small objects (< 512 bytes)"
-      - "The OS allocator used by Python"
-      - "A garbage collection algorithm"
+      - "Generation 2 (old)"
+      - "Generation 1 (middle)"
+      - "Generation 0 (young)"
+      - "No generation — it's assigned later"
+    answer: 2
+    explanation: "All new objects start in Generation 0, which is checked most frequently. If they survive a GC sweep, they're promoted to Generation 1, then Generation 2. This is based on the 'generational hypothesis': most objects die young."
+
+  - question: "What is the purpose of Python's pymalloc (memory pools)?"
+    options:
+      - "To profile memory usage"
+      - "To pre-allocate pools of memory for small objects (≤ 512 bytes) so Python doesn't have to ask the OS every time"
+      - "To compress objects in memory"
+      - "To handle circular references"
     answer: 1
-    explanation: "PyMalloc is Python's custom allocator that uses pre-allocated pools for small objects, reducing syscall overhead."
+    explanation: "Asking the OS for memory on every small allocation would be very slow. pymalloc pre-allocates large blocks (arenas), divides them into pools, and hands out fixed-size blocks — making small object allocation very fast."
+
+  - question: "Why is this code a bug? def add(item, lst=[]): lst.append(item); return lst"
+    options:
+      - "Lists can't be used as default arguments"
+      - "The [] default is created only once — all calls share the same list object"
+      - "append() doesn't work inside functions"
+      - "It's not a bug — it works correctly"
+    answer: 1
+    explanation: "Default argument values are evaluated ONCE when the function is defined, not on every call. So the same list object is reused across all calls. Fix: use lst=None and create a new list inside the function."
+
+  - question: "What does sys.getsizeof([]) return — and what does it NOT include?"
+    options:
+      - "0 bytes — empty objects take no space"
+      - "The size of the list object itself (~56 bytes), but NOT the sizes of the objects stored inside it"
+      - "The total memory of the list and all its contents"
+      - "Always 8 bytes — Python uses pointers"
+    answer: 1
+    explanation: "sys.getsizeof() returns the size of the container object itself, not the objects it references. An empty list is ~56 bytes of overhead. To get the total size including contents, you'd need a recursive size function."
+
+  - question: "After: a = 10; a = a + 1 — what happened in memory?"
+    options:
+      - "The integer object 10 was modified to become 11 in place"
+      - "A completely new integer object 11 was created; 'a' now points to it"
+      - "Both 10 and 11 exist permanently in memory"
+      - "Python detected the pattern and optimised it away"
+    answer: 1
+    explanation: "Integers are IMMUTABLE. Python cannot change 10 to 11. Instead, it creates a new integer object 11 on the heap and rebinds 'a' to point at it. The old object 10 has its refcount reduced (and freed if it hits 0)."

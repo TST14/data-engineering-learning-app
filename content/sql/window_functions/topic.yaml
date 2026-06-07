@@ -1,5 +1,10 @@
-title: "SQL Window Functions"
-difficulty: "Intermediate"
-estimated_time: "20 min"
-tags: ["sql", "window-functions", "analytics", "OVER", "PARTITION BY"]
-prerequisites: ["sql-basics"]
+title: SQL Window Functions
+difficulty: Intermediate
+estimated_time: 20 min
+tags:
+- sql
+- window-functions
+- analytics
+- OVER
+- PARTITION BY
+prerequisites: []
