@@ -1,4 +1,5 @@
 """Streamlit app entry point."""
+import random
 import re
 from pathlib import Path
 
@@ -23,64 +24,146 @@ with open(Path(__file__).parent / "themes" / "style.css") as f:
 CONTENT_DIR = Path(__file__).parent.parent / "content"
 ARCH_DOC = Path(__file__).parent.parent / "ARCHITECTURE.md"
 
+CARDS_PER_PAGE = 20
+COLS_PER_ROW = 4
+
+
+@st.dialog("📋 Pick a Topic", width="large")
+def _topic_picker_dialog(cat_topics: list[dict], completed_keys: set[str]) -> None:
+    """Full-screen modal listing all topics in the active category."""
+    if not cat_topics:
+        st.info("No topics found.")
+        return
+
+    # In-dialog search to narrow the list further
+    q = st.text_input("🔍 Filter", placeholder="Type to filter…", label_visibility="collapsed").strip().lower()
+    filtered = [
+        t for t in cat_topics
+        if not q or q in t["title"].lower() or any(q in tag.lower() for tag in t["tags"])
+    ]
+
+    st.caption(f"{len(filtered)} topics")
+    st.divider()
+
+    DIFF_ICON = {"beginner": "🟢", "intermediate": "🟡", "advanced": "🔴"}
+    for entry in filtered:
+        tk = f"{entry['category']}/{entry['topic']}"
+        is_done = tk in completed_keys
+        diff_icon = DIFF_ICON.get(entry["difficulty"].lower(), "⚪")
+        icon_col, btn_col, diff_col, time_col = st.columns([1, 8, 3, 2])
+        icon_col.markdown(
+            "<div style='text-align:center;padding-top:8px;font-size:1.1rem'>✅</div>" if is_done
+            else "<div style='text-align:center;padding-top:8px;color:#aaa'>○</div>",
+            unsafe_allow_html=True,
+        )
+        if btn_col.button(entry["title"], key=f"dlg_{entry['category']}_{entry['topic']}", use_container_width=True):
+            st.session_state["selected_topic"] = entry["topic"]
+            st.session_state["selected_category"] = entry["category"]
+            st.rerun()
+        diff_col.markdown(
+            f"<div style='padding-top:8px'>{diff_icon} {entry['difficulty']}</div>",
+            unsafe_allow_html=True,
+        )
+        time_col.markdown(
+            f"<div style='padding-top:8px;color:#888'>⏱️ {entry['estimated_time']}</div>",
+            unsafe_allow_html=True,
+        )
+
 
 @st.cache_data
-def _topic_titles(category_path_str: str) -> dict[str, str]:
-    """Return {folder_name: display_title} for every topic in a category.
+def _build_topic_index(content_dir_str: str) -> list[dict]:
+    """Flat list of every topic across all categories — built once and cached.
 
-    Results are cached per category path so repeated sidebar renders do
-    not re-read YAML files from disk on every interaction.
+    Single filesystem scan that powers search, filtering, card grid, and
+    progress counts. At 1000+ topics this keeps reruns fast because YAML
+    files are only read here, never in the render loop.
     """
-    category_dir = Path(category_path_str)
-    return {
-        folder: load_topic_meta(category_dir / folder).get(
-            "title", folder.replace("_", " ").title()
-        )
-        for folder in list_topics(category_dir)
-    }
+    content_dir = Path(content_dir_str)
+    index = []
+    for cat in list_categories(content_dir):
+        for topic in list_topics(content_dir / cat):
+            meta = load_topic_meta(content_dir / cat / topic)
+            index.append({
+                "category": cat,
+                "topic": topic,
+                "title": meta.get("title", topic.replace("_", " ").title()),
+                "difficulty": meta.get("difficulty", ""),
+                "estimated_time": meta.get("estimated_time", ""),
+                "tags": meta.get("tags", []),
+            })
+    return index
 
 
-# ── Sidebar ──────────────────────────────────────────────────────────────────
+# ── Progress (load once per rerun) ───────────────────────────────────────────
+progress = load_progress()
+completed_keys: set[str] = set(progress.get("completed", []))
+
+# ── Session defaults ──────────────────────────────────────────────────────────
+if "selected_topic" not in st.session_state:
+    st.session_state["selected_topic"] = None   # None = home screen
+if "selected_category" not in st.session_state:
+    st.session_state["selected_category"] = None
+if "page" not in st.session_state:
+    st.session_state["page"] = 0
+
+# ── Sidebar (filters only — no per-topic widgets) ────────────────────────────
 st.sidebar.title("📚 Learning Modules")
 
-categories = list_categories(CONTENT_DIR)
-default_cat_index = categories.index("python") if "python" in categories else 0
-selected_category = st.sidebar.selectbox(
-    "Category",
-    categories,
-    index=default_cat_index,
-    format_func=lambda c: c.replace("_", " ").title(),
+topic_index = _build_topic_index(str(CONTENT_DIR))
+all_categories = list_categories(CONTENT_DIR)
+
+# Search
+search_query = st.sidebar.text_input(
+    "🔍 Search", placeholder="Search topics, tags…", label_visibility="collapsed"
+).strip().lower()
+
+# Category filter
+cat_display = ["All"] + [c.replace("_", " ").title() for c in all_categories]
+cat_filter_idx = st.sidebar.selectbox(
+    "Category", range(len(cat_display)),
+    format_func=lambda i: cat_display[i],
+    key="cat_filter_idx",
 )
-
-topics = list_topics(CONTENT_DIR / selected_category)
-topic_titles = _topic_titles(str(CONTENT_DIR / selected_category))
-# Re-sort by human title (case-insensitive) so sidebar matches what the user reads
-topics = sorted(topics, key=lambda t: topic_titles.get(t, t).lower())
-
-if st.sidebar.button("🎲 Random Topic"):
-    rand_topic = random_topic(CONTENT_DIR / selected_category)
-    if rand_topic:
-        st.session_state["selected_topic"] = rand_topic
-
-selected_topic = st.sidebar.selectbox(
-    "Topic",
-    topics,
-    index=topics.index(st.session_state.get("selected_topic", topics[0]))
-    if st.session_state.get("selected_topic") in topics
-    else 0,
-    format_func=lambda t: topic_titles.get(t, t.replace("_", " ").title()),
-)
-st.session_state["selected_topic"] = selected_topic
-
-# ── Progress ─────────────────────────────────────────────────────────────────
-progress = load_progress()
-topic_key = f"{selected_category}/{selected_topic}"
-completed = topic_key in progress.get("completed", [])
+filter_cat = None if cat_filter_idx == 0 else all_categories[cat_filter_idx - 1]
 
 st.sidebar.markdown("---")
+
+# ── Jump to topic — opens a full-screen modal showing only the active category ──
+_active_cat = st.session_state.get("selected_category") or filter_cat or (all_categories[0] if all_categories else None)
+dialog_pool = sorted(
+    [t for t in topic_index if t["category"] == _active_cat],
+    key=lambda t: t["title"].lower(),
+)
+_cat_display = _active_cat.replace("_", " ").title() if _active_cat else "Topics"
+if st.sidebar.button(f"📄 Browse {_cat_display} ({len(dialog_pool)})", use_container_width=True):
+    _topic_picker_dialog(dialog_pool, completed_keys)
+
+st.sidebar.markdown("---")
+
+# Random topic (respects active filters)
+if st.sidebar.button("🎲 Random Topic"):
+    candidates = [
+        t for t in topic_index
+        if filter_cat is None or t["category"] == filter_cat
+    ]
+    if candidates:
+        pick = random.choice(candidates)
+        st.session_state["selected_topic"] = pick["topic"]
+        st.session_state["selected_category"] = pick["category"]
+        st.rerun()
+
+# Back to home (only shown when in topic detail view)
+if st.session_state.get("selected_topic"):
+    if st.sidebar.button("← Back to Topics", use_container_width=True):
+        st.session_state["selected_topic"] = None
+        st.session_state["selected_category"] = None
+        st.rerun()
+
+# ── Progress ──────────────────────────────────────────────────────────────────
+st.sidebar.markdown("---")
 st.sidebar.subheader("📊 Progress")
-total_topics = sum(len(list_topics(CONTENT_DIR / c)) for c in categories)
-done_count = len(progress.get("completed", []))
+total_topics = len(topic_index)
+done_count = len(completed_keys)
 st.sidebar.progress(done_count / max(total_topics, 1), text=f"{done_count}/{total_topics} topics done")
 
 if st.sidebar.button("🗑️ Reset Progress"):
@@ -100,7 +183,7 @@ if st.session_state.get("confirm_reset"):
 st.sidebar.markdown("---")
 show_dev_docs = st.sidebar.toggle("📐 Developer Docs", value=False)
 
-# ── Main Content ─────────────────────────────────────────────────────────────
+# ── Main Content ──────────────────────────────────────────────────────────────
 if show_dev_docs:
     st.title("🏛️ Architecture & Developer Guide")
     st.caption("Technical reference for contributors and maintainers.")
@@ -109,8 +192,14 @@ if show_dev_docs:
         st.markdown(ARCH_DOC.read_text(encoding="utf-8"))
     else:
         st.error("ARCHITECTURE.md not found in repo root.")
-else:
+
+elif st.session_state.get("selected_topic") and st.session_state.get("selected_category"):
+    # ── Topic detail view ─────────────────────────────────────────────────────
+    selected_topic = st.session_state["selected_topic"]
+    selected_category = st.session_state["selected_category"]
     topic_path = CONTENT_DIR / selected_category / selected_topic
+    topic_key = f"{selected_category}/{selected_topic}"
+    completed = topic_key in completed_keys
     meta = load_topic_meta(topic_path)
 
     col1, col2 = st.columns([4, 1])
@@ -129,7 +218,6 @@ else:
 
     st.divider()
 
-    # ── Tabs ─────────────────────────────────────────────────────────────────
     tab_learn, tab_code, tab_quiz = st.tabs(["📖 Learn", "💻 Code Example", "🧪 Quiz"])
 
     with tab_learn:
@@ -140,10 +228,7 @@ else:
         if explanation_path.exists():
             content = explanation_path.read_text(encoding="utf-8")
             # Split on <!-- gif: filename --> HTML comment markers.
-            # These are invisible in rendered markdown but let authors
-            # control exactly where an image appears in the explanation.
             parts = re.split(r'<!--\s*gif:\s*(\S+?)\s*-->', content)
-            # parts layout: [text, gif_name, text, gif_name, text, ...]
             for i, part in enumerate(parts):
                 if i % 2 == 0:
                     if part.strip():
@@ -158,13 +243,12 @@ else:
                             st.image(
                                 str(gif_path),
                                 caption=gif_path.stem.replace("_", " ").title(),
-                                use_column_width=True,
+                                width="stretch",
                             )
                         shown_inline.add(gif_name)
         else:
             st.info("No explanation available yet.")
 
-        # Show any assets that were not embedded inline
         if assets_dir.exists():
             remaining = sorted(
                 img for img in (
@@ -195,3 +279,79 @@ else:
         else:
             st.info("No quiz available yet.")
 
+else:
+    # ── Home screen — paginated topic card grid ───────────────────────────────
+    filtered = topic_index
+
+    if search_query:
+        filtered = [
+            t for t in filtered
+            if search_query in t["title"].lower()
+            or search_query in t["category"].lower()
+            or any(search_query in tag.lower() for tag in t["tags"])
+        ]
+    if filter_cat:
+        filtered = [t for t in filtered if t["category"] == filter_cat]
+
+    # Reset to page 0 when filters change
+    filter_sig = f"{search_query}|{filter_cat}"
+    if st.session_state.get("_filter_sig") != filter_sig:
+        st.session_state["page"] = 0
+        st.session_state["_filter_sig"] = filter_sig
+
+    total = len(filtered)
+    total_pages = max(1, (total + CARDS_PER_PAGE - 1) // CARDS_PER_PAGE)
+    page = min(st.session_state.get("page", 0), total_pages - 1)
+    st.session_state["page"] = page
+
+    done_pct = int(done_count / max(total_topics, 1) * 100)
+    st.title("🧠 Data Engineering Learning Hub")
+    st.caption(f"**{total}** topics  ·  **{done_count}/{total_topics}** completed ({done_pct}%)")
+    st.divider()
+
+    if not filtered:
+        st.info("No topics match your filters. Try a different search or category.")
+    else:
+        page_topics = filtered[page * CARDS_PER_PAGE : (page + 1) * CARDS_PER_PAGE]
+        DIFF_ICON = {"beginner": "🟢", "intermediate": "🟡", "advanced": "🔴"}
+
+        for row_start in range(0, len(page_topics), COLS_PER_ROW):
+            row = page_topics[row_start : row_start + COLS_PER_ROW]
+            cols = st.columns(COLS_PER_ROW)
+            for col, entry in zip(cols, row):
+                with col:
+                    tk = f"{entry['category']}/{entry['topic']}"
+                    is_done = tk in completed_keys
+                    with st.container(border=True):
+                        st.markdown(
+                            f"{'✅' if is_done else '○'} **{entry['title']}**  \n"
+                            f"<small>📂 {entry['category'].replace('_', ' ').title()}</small>",
+                            unsafe_allow_html=True,
+                        )
+                        diff_icon = DIFF_ICON.get(entry["difficulty"].lower(), "⚪")
+                        st.caption(f"{diff_icon} {entry['difficulty']}  ·  ⏱️ {entry['estimated_time']}")
+                        if st.button(
+                            "Open →",
+                            key=f"card_{entry['category']}_{entry['topic']}",
+                            use_container_width=True,
+                            type="primary" if is_done else "secondary",
+                        ):
+                            st.session_state["selected_topic"] = entry["topic"]
+                            st.session_state["selected_category"] = entry["category"]
+                            st.rerun()
+
+        # Pagination controls
+        if total_pages > 1:
+            st.divider()
+            prev_col, info_col, next_col = st.columns([1, 3, 1])
+            if prev_col.button("← Prev", disabled=page == 0, use_container_width=True):
+                st.session_state["page"] = page - 1
+                st.rerun()
+            info_col.markdown(
+                f"<div style='text-align:center;padding-top:8px'>Page {page + 1} of {total_pages}</div>",
+                unsafe_allow_html=True,
+            )
+            if next_col.button("Next →", disabled=page >= total_pages - 1, use_container_width=True):
+                st.session_state["page"] = page + 1
+                st.rerun()
+                
